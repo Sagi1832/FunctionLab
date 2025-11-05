@@ -8,7 +8,8 @@ from app.core.foundation.derivative import DerivativeEngine
 from app.core.critical_points.true_critical_candidates import find_critical_candidates_simple
 from app.core.critical_points.extreme_points import classify_extrema_from_monotonic
 from app.core.monotonic import monotonicity_intervals
-from app.api.all_routes.func_library.extrema_and_mono.helpers import _mk_interval, _interval_to_str, _point_to_str
+from app.api.all_routes.func_library.extrema_and_mono.helpers import _mk_interval, _interval_to_str, _point_to_str, _monotonic_output
+
 
 router = APIRouter()
 
@@ -43,9 +44,7 @@ def extrema_and_monotonic_endpoint(body: ExtremaMonoIn) -> ExtremaMonoOut:
 
         mono_list = monotonicity_intervals(eng, interval=iv)  
 
-        monotonic_out: Dict[str, str] = {
-            _interval_to_str(seg): str(sign) for (seg, sign) in mono_list
-        }
+        monotonic_out = _monotonic_output(eng, iv)
         mono_map: Dict[sp.Interval, str] = {seg: str(sign) for (seg, sign) in mono_list}
 
         classified = classify_extrema_from_monotonic(f, x, candidates, mono_map)

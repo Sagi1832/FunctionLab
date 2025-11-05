@@ -36,17 +36,14 @@ def asymptotes_and_holes_endpoint(body: AsymptotesHolesIn) -> AsymptotesHolesOut
 
         res = asymptotes_summary(f, x, interval=iv)
 
-        # אנכי כמחרוזות
         vertical_out = [sp.sstr(v) for v in res["vertical"]]
 
-        # אופקי – שים לב: אנחנו מצפים ל-"left"/"right"
         h = res["horizontal"]
         horizontal_out = {
             "left":  (None if h.get("left")  is None else sp.sstr(h["left"])),
             "right": (None if h.get("right") is None else sp.sstr(h["right"])),
         }
 
-        # חורים: הפורמט המבוקש "(x0, y0)"
         holes_out = [f"({sp.sstr(x0)}, {sp.sstr(y0)})" for (x0, y0) in res["holes"]]
 
         return AsymptotesHolesOut(

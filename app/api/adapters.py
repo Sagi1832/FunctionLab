@@ -15,9 +15,7 @@ def sympy_locals(var: Union[str, Dict[str, sp.Symbol]],
 
     if isinstance(var, dict):
         return {**base, **var}
-
     if isinstance(var, str):
-        # var הוא שם המשתנה הראשי (למשל "x")
         if sym is None:
             sym = sp.Symbol(var, real=True)
         out = base.copy()
@@ -37,3 +35,5 @@ class LnStrPrinter(StrPrinter):
 
 def sstr_ln(expr: sp.Expr) -> str:
     return LnStrPrinter().doprint(expr)
+
+

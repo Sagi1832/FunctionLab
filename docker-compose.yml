@@ -6,6 +6,32 @@ services:
       - "${PORT:-8000}:8000"
     env_file:
       - .env
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://functionlab:functionlab_pw@db:5432/functionlab
     volumes:
       - .:/app
+    depends_on:
+      db:
+        condition: service_healthy
     command: uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --reload
+
+  db:
+    image: postgres:16-alpine
+    container_name: functionlab-postgres
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-functionlab}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-functionlab_pw}
+      POSTGRES_DB: ${POSTGRES_DB:-functionlab}
+    ports:
+      - "5432:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U functionlab -d functionlab"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+volumes:
+  db-data:

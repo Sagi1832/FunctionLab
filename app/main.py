@@ -1,4 +1,3 @@
-# app/main.py
 from app.api.all_routes.routes import app
 
 if __name__ == "__main__":

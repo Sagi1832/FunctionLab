@@ -1,8 +1,6 @@
-from __future__ import annotations
-from dataclasses import dataclass, field
 from typing import List, Tuple, Dict, Any, Optional
 import sympy as sp
-
+from dataclasses import dataclass, field
 
 
 @dataclass

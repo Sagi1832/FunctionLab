@@ -5,17 +5,20 @@ from .func_library.foundation_funcs.derivative_route import router as derivative
 from .func_library.interceptions.x_interception_rute import router as x_interception_router
 from .func_library.interceptions.y_interception_rute import router as y_interception_router
 from .func_library.asymptotes_holes_route import router as asymptotes_and_holes_router
-from .func_library.extrema_and_monotonic_route import router as mono_and_critPoints_router
+from .func_library.extrema_and_mono.extrema_and_monotonic_route import router as extrema_and_mono_router
+from .llm_route import router as llm_router
+from app.api.all_routes.auth_routers.auth_router import router as auth_router
 
 
 routers = [domain_router, limits_router, need_interval_router, 
-            derivative_router, x_interception_router, y_interception_router, 
-            asymptotes_and_holes_router, mono_and_critPoints_router]
+           derivative_router, x_interception_router, y_interception_router, 
+           asymptotes_and_holes_router, extrema_and_mono_router, llm_router,
+           auth_router]
 
 
 __all__ = ["routers", "domain_router", "limits_router", 
-            "need_interval_router", "derivative_router", "x_interception_router", 
-            "y_interception_router", "asymptotes_and_holes_router", "mono_and_critPoints_router"]
+           "need_interval_router", "derivative_router", "x_interception_router", 
+           "y_interception_router", "asymptotes_and_holes_router", "extrema_and_mono_router", "llm_router", "auth_router"]
 
 
 
