@@ -1,0 +1,4 @@
+{
+  "python.analysis.extraPaths": ["${workspaceFolder}", "${workspaceFolder}/../functionlab"],
+  "python.envFile": "${workspaceFolder}/.env"
+}
