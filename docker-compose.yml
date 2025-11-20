@@ -1,37 +1,54 @@
+version: "3.9"
+
 services:
-  api:
-    build: .
-    container_name: functionlab-api
+  functionlab-zookeeper:
+    image: confluentinc/cp-zookeeper:7.7.0
+    container_name: functionlab-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
     ports:
-      - "${PORT:-8000}:8000"
+      - "2181:2181"
+    networks:
+      - functionlab_net
+
+  functionlab-kafka:
+    image: confluentinc/cp-kafka:7.7.0
+    container_name: functionlab-kafka
+    depends_on:
+      - functionlab-zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      # שים לב לשם ה-service כאן:
+      KAFKA_ZOOKEEPER_CONNECT: "functionlab-zookeeper:2181"
+
+      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092"
+      # וגם פה: השם הוא functionlab-kafka כדי שיתאים ל-ENGINE_KAFKA_BOOTSTRAP
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://functionlab-kafka:9092"
+
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
+      KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
+    ports:
+      - "9092:9092"
+    networks:
+      - functionlab_net
+
+  functionlab-engine-worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: functionlab-engine-worker
+    # worker שרץ ברקע ומדבר עם Kafka
+    command: ["python", "-m", "engine.workers.main"]
     env_file:
       - .env
-    environment:
-      - DATABASE_URL=postgresql+asyncpg://functionlab:functionlab_pw@db:5432/functionlab
-    volumes:
-      - .:/app
     depends_on:
-      db:
-        condition: service_healthy
-    command: uvicorn app.main:app --host 0.0.0.0 --port ${PORT:-8000} --reload
-
-  db:
-    image: postgres:16-alpine
-    container_name: functionlab-postgres
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER:-functionlab}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-functionlab_pw}
-      POSTGRES_DB: ${POSTGRES_DB:-functionlab}
-    ports:
-      - "5432:5432"
-    volumes:
-      - db-data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U functionlab -d functionlab"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
+      - functionlab-kafka
+    networks:
+      - functionlab_net
     restart: unless-stopped
 
-volumes:
-  db-data:
+networks:
+  functionlab_net:
+    driver: bridge

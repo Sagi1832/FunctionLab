@@ -37,24 +37,6 @@ def require_interval_minimal(expr: sp.Expr, var: sp.Symbol, interval: IntervalLi
         raise ValueError("interval must overlap the domain with positive measure.")
     return iv
 
-def prompt_interval_until_valid(expr: sp.Expr, var: sp.Symbol) -> sp.Interval:
-    """ asks for a valid interval again if the last one wasn't """
-    while True:  
-        raw = input("Enter interval as a,b (e.g. -2, 5): ").strip()
-
-        if raw and raw[0] in "([{":
-            raw = raw[1:]
-        if raw and raw[-1] in ")]}":
-            raw = raw[:-1]
-
-        try:
-            a_str, b_str = raw.split(",", 1)
-            a, b = float(a_str.strip()), float(b_str.strip())
-            return require_interval_minimal(expr, var, (a, b))
-        except ValueError as e:
-            print(f"Invalid interval: {e}")
-        except Exception:
-            print("Invalid format. Please type two numbers separated by a comma, e.g. -2, 5.")
-
-
+    
 validate_interval = require_interval_minimal
+coerce_interval = _to_interval

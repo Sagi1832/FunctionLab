@@ -5,7 +5,7 @@ import logging
 from app.llm.schemas.analyze import AnalyzeRequest, AnalyzeResult, AnalyzeResponse
 
 
-from .analyze_present_helpers import (
+from app.llm.pipelines.analyze_present_backend.analyze_present_helpers import (
     preflight_validate,
     normalize_input,
     run_core_action,

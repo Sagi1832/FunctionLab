@@ -15,8 +15,10 @@ class InputNormalizer(Agent[NormalizationRequest, NormalizationResult]):
 
     def run(self, payload: NormalizationRequest) -> NormalizationResult:
         try:
+            raw_expr = (payload.raw or "").replace("^", "**")
+            raw_expr = raw_expr.replace("**0.5", "**(1/2)")
             system = prompt_mod.SYSTEM_PROMPT
-            user = prompt_mod.user_prompt(expr=payload.raw, var=payload.var)
+            user = prompt_mod.user_prompt(expr=raw_expr, var=payload.var)
             text = (self.client.complete(system=system, user=user) or "").strip()
             if not text:
                 raise ValueError("Empty LLM response")
@@ -25,6 +27,8 @@ class InputNormalizer(Agent[NormalizationRequest, NormalizationResult]):
                 raise ValueError("Sanitized expression is empty")
             return NormalizationResult(expr=expr, var=payload.var)
         except Exception:
-            expr = _fallback_normalize(payload.raw, payload.var)
+            fallback_raw = (payload.raw or "").replace("^", "**")
+            fallback_raw = fallback_raw.replace("**0.5", "**(1/2)")
+            expr = _fallback_normalize(fallback_raw, payload.var)
             expr = _sanitize_expression(expr, payload.var)
             return NormalizationResult(expr=expr, var=payload.var)

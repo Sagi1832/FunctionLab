@@ -1,7 +1,11 @@
 from __future__ import annotations
 
+import logging
+
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import JSONResponse
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import text
 
 from app.db.session import get_db
 from app.api.all_routes.auth_routers.schemas.auth_io import RegisterIn, LoginIn, RefreshIn, AuthTokensOut, UserOut
@@ -9,6 +13,21 @@ from app.auth.services.auth_service import register as svc_register, login as sv
 from app.auth.dependencies import get_current_user
 
 router = APIRouter(prefix="/auth", tags=["auth"])
+logger = logging.getLogger(__name__)
+
+
+@router.get("/health")
+async def auth_health(session: AsyncSession = Depends(get_db)):
+    """Check database connectivity for auth services."""
+    try:
+        await session.execute(text("SELECT 1"))
+        return {"db": "ok"}
+    except Exception as exc:
+        logger.error("Auth DB health check failed", exc_info=True)
+        return JSONResponse(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            content={"db": "down", "error": str(exc)},
+        )
 
 
 @router.post("/register", response_model=UserOut, status_code=status.HTTP_201_CREATED)
@@ -27,6 +46,7 @@ async def register(payload: RegisterIn, session: AsyncSession = Depends(get_db))
         raise
     except Exception:
         await session.rollback()
+        logger.exception("Unhandled error during /auth/register")
         raise
 
 
@@ -41,6 +61,7 @@ async def login(payload: LoginIn, session: AsyncSession = Depends(get_db)) -> Au
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     except Exception:
         await session.rollback()
+        logger.exception("Unhandled error during /auth/login")
         raise
 
 
@@ -55,6 +76,7 @@ async def refresh(payload: RefreshIn, session: AsyncSession = Depends(get_db)) -
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired refresh token")
     except Exception:
         await session.rollback()
+        logger.exception("Unhandled error during /auth/refresh")
         raise
 
 
@@ -66,6 +88,7 @@ async def logout(payload: RefreshIn, session: AsyncSession = Depends(get_db)) ->
         await session.commit()
     except Exception:
         await session.rollback()
+        logger.exception("Unhandled error during /auth/logout")
         raise
 
 

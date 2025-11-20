@@ -20,7 +20,12 @@ app.state.limiter = limiter
 app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 # CORS middleware
-CORS_ORIGINS = getattr(settings, "cors_origins_list", ["http://localhost:3000"])
+DEFAULT_CORS_ORIGINS = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "http://localhost:3000",
+]
+CORS_ORIGINS = getattr(settings, "cors_origins_list", DEFAULT_CORS_ORIGINS)
 app.add_middleware(
     CORSMiddleware,
     allow_origins=CORS_ORIGINS,
@@ -29,29 +34,6 @@ app.add_middleware(
     allow_headers=["Authorization", "Content-Type"],
 )
 
-@app.on_event("startup")
-async def startup_event():
-    """Log environment configuration at startup."""
-    env_db_url = os.getenv("DATABASE_URL", "NOT SET")
-    if env_db_url != "NOT SET":
-        masked = env_db_url
-        if "@" in masked and ":" in masked.split("@")[0]:
-            parts = masked.split("@")
-            if ":" in parts[0]:
-                user_pass = parts[0].split(":")
-                if len(user_pass) == 2:
-                    masked = f"{user_pass[0]}:***@{parts[1]}"
-        logger.info(f"Environment DATABASE_URL (masked): {masked}")
-    else:
-        logger.warning("DATABASE_URL not found in environment variables")
-    
-    # Also log what settings sees
-    try:
-        from app.config.settings import settings
-        from app.db.session import _mask_password
-        logger.info(f"Settings.DATABASE_URL will be used (masked): {_mask_password(settings.DATABASE_URL)}")
-    except Exception as e:
-        logger.error(f"Error reading settings.DATABASE_URL: {e}")
 
 @app.get("/")
 async def root():

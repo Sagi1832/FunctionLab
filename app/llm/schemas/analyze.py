@@ -11,7 +11,7 @@ class Action(str, Enum):
     y_intercepts = "y_intercepts"
     asymptotes_and_holes = "asymptotes_and_holes"
     extrema_and_monotonic = "extrema_and_monotonic"
-    limits = "limits"
+
 
 
 class AnalyzeRequest(BaseModel):
@@ -42,4 +42,4 @@ class AnalyzeResponse(BaseModel):
     report: Dict[str, Any]
     warnings: List[str] = []
     errors: List[str] = []
-    present: Optional[Dict[str, Any]] = None  # PresentResult as dict when present=True
+    present: Optional[Dict[str, Any]] = None

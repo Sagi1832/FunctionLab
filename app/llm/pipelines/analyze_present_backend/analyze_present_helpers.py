@@ -6,9 +6,16 @@ import logging
 from app.llm.schemas.analyze import AnalyzeRequest, AnalyzeResult, Action
 from app.llm.schemas.normalization import NormalizationRequest, NormalizationResult
 from app.llm.agents.input_normalizer_agent.input_normalizer import InputNormalizer
-from app.llm.agents.presenter_llm.agent import LLMPresenter
 from app.llm.agents.narrator_agent.narrator import NarratorAgent
 from app.llm.pipelines.dispatch import dispatch_action
+
+# helpers (internal) – moved to a dedicated support module
+from app.llm.pipelines.analyze_present_backend.analyze_present_support import (
+    _init_present_data,
+    _attach_asymptotes_card,
+    _attach_extrema_card,
+    _maybe_run_presenter,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -70,45 +77,30 @@ def build_raw_only_response(result: AnalyzeResult) -> Dict[str, Any]:
 
 # ---------- Presentation (code / llm) ----------
 
-
-
 def generate_presentation(req: AnalyzeRequest, result: AnalyzeResult) -> Tuple[Optional[Dict[str, Any]], List[str]]:
-    """
-    Generate LLM-only presentation with Markdown document.
-    Returns (present_data | None, extra_warnings).
-    """
+    """Generate presenter output and attach it to the present data (refactored)."""
     warnings: List[str] = []
-    try:
-        # Build minimal present_data structure
-        present_data = {
-            "title": f"Analysis summary for f({result.var}) = {result.expr}",
-            "expr": result.expr,
-            "var": result.var,
-            "warnings": result.warnings,
-            "errors": result.errors,
-        }
-        
-        # Generate LLM Markdown document
-        try:
-            llm_presenter = LLMPresenter()
-            markdown_doc = llm_presenter.run(result)  # Pass raw analysis data
-            present_data["doc_md"] = markdown_doc
-        except Exception as e:
-            msg = f"LLM presenter failed: {str(e)}"
-            logger.warning(msg)
-            warnings.append(msg)
-            # Return present_data without doc_md on LLM failure
-        
-        return present_data, warnings
-    except Exception as e:
-        msg = f"Presentation generation failed: {str(e)}"
-        logger.warning(msg)
-        warnings.append(msg)
-        return None, warnings
+
+    present: Dict[str, Any] = _init_present_data(result)
+
+    if result.action.value == "asymptotes_and_holes":
+        _attach_asymptotes_card(present, result)
+
+    if result.action.value == "extrema_and_monotonic":
+        _attach_extrema_card(present, result)
+    else:
+        present.setdefault("card", {})
+        _maybe_run_presenter(present, result, warnings)
+
+    return present, warnings
 
 # ---------- Optional narration ----------
 
-def maybe_add_narration(req: AnalyzeRequest, present_data: Optional[Dict[str, Any]], warnings_out: List[str]) -> Optional[Dict[str, Any]]:
+def maybe_add_narration(
+    req: AnalyzeRequest,
+    present_data: Optional[Dict[str, Any]],
+    warnings_out: List[str]
+) -> Optional[Dict[str, Any]]:
     """If narrate=True and present data exists, try to add a natural-language narration."""
     if not (req.narrate and present_data):
         return present_data

@@ -16,10 +16,12 @@ class DerivativeEngine:
 
     @classmethod
     def from_strings(cls, expr: ExprLike, var: Union[str, sp.Symbol, None] = None):
+        """Creates a DerivativeEngine from a string expression."""
         x = var if isinstance(var, sp.Symbol) else sp.Symbol(var or "x", real=True)
         return cls(_to_expr(expr), x)
 
     def derive(self) -> sp.Expr:
+        """Derives the expression."""
         if self._raw is not None:
             return self._raw
         f = sp.simplify(self.expr)
@@ -27,6 +29,7 @@ class DerivativeEngine:
         return self._raw
 
     def simplify_derivative(self) -> sp.Expr:
+        """Simplifies the derivative."""
         if self._simplified is not None:
             return self._simplified
         self._simplified = sp.simplify(self.derive())
