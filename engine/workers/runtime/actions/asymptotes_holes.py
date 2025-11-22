@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, Optional, Tuple
 
 import sympy as sp
-from app.api.adapters import sympy_locals
+from app.utils.adapters import sympy_locals
 from app.core.asymptotes.asymptotes_display import asymptotes_summary
 
 

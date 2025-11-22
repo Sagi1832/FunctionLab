@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict
 
 import sympy as sp
-from app.api.adapters import sstr_ln, sympy_locals
+from app.utils.adapters import sstr_ln, sympy_locals
 from app.core.foundation.derivative import DerivativeEngine
 
 

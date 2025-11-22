@@ -3,12 +3,12 @@ from __future__ import annotations
 from typing import Any, Dict, Tuple
 
 import sympy as sp
-from app.api.adapters import sympy_locals
+from app.utils.adapters import sympy_locals
 from app.core.critical_points.extreme_points import classify_extrema_from_monotonic
 from app.core.critical_points.true_critical_candidates import find_critical_candidates_simple
 from app.core.foundation.derivative import DerivativeEngine
 from app.core.monotonic import monotonicity_intervals
-from app.api.all_routes.func_library.extrema_and_mono.helpers import (
+from app.utils.extrema_helpers import (
     _mk_interval,
     _point_to_str,
     _monotonic_output,
