@@ -1,38 +1,69 @@
-"""Test for analyze_and_present Kafka handler to ensure it uses payload action, not Kafka action."""
+"""Test for analyze_and_present Kafka handler with new pipeline (normalize -> core -> presenter)."""
 
 from __future__ import annotations
 
 import pytest
+from unittest.mock import AsyncMock, MagicMock, patch
 from engine.workers.runtime.actions.analyze_and_present import _handle_analyze_and_present
+from engine.workers.runtime.actions.domain import _handle_domain
 
 
 @pytest.mark.asyncio
-async def test_analyze_and_present_uses_payload_action_not_kafka_action():
-    """Test that analyze_and_present handler extracts math action from payload, not Kafka action.
+async def test_analyze_and_present_returns_analyze_response_with_present():
+    """Test that analyze_and_present handler returns AnalyzeResponse with present string.
     
-    This test simulates a Kafka call with:
-    - Kafka action: "analyze_and_present" (engine function name)
-    - Payload action: "domain" (user's math action)
-    
-    The handler should extract "domain" from payload["action"] and dispatch to the domain handler,
-    not treat "analyze_and_present" as the math action.
+    The handler should:
+    1. Normalize input
+    2. Run calculus core
+    3. Call presenter LLM
+    4. Return AnalyzeResponse with present string (no raw report)
     """
     # Simulate the payload that comes from AnalyzeRequest
     payload = {
-        "raw": "1/x",
+        "raw": "x**2",
         "var": "x",
-        "action": "domain",  # This is the math action, NOT "analyze_and_present"
+        "action": "domain",
         "present": True,
     }
     
-    # This should NOT raise "unsupported action 'analyze_and_present'"
-    # It should extract "domain" from payload["action"] and dispatch to domain handler
-    result = await _handle_analyze_and_present(payload)
+    # Mock handlers dict
+    handlers = {
+        "domain": _handle_domain,
+    }
     
-    # Verify we got a result (domain handler returns {"raw": "..."})
+    # Mock the presenter LLM to return a string
+    with patch("engine.workers.runtime.actions.analyze_pipeline.LLMPresenter") as mock_presenter_class:
+        mock_presenter = MagicMock()
+        mock_presenter.run.return_value = "Domain: All real numbers"
+        mock_presenter_class.return_value = mock_presenter
+        
+        # Mock InputNormalizer
+        with patch("engine.workers.runtime.actions.analyze_pipeline.InputNormalizer") as mock_normalizer_class:
+            mock_normalizer = MagicMock()
+            from app.llm.schemas.normalization import NormalizationResult
+            mock_normalizer.run.return_value = NormalizationResult(expr="x**2", var="x")
+            mock_normalizer_class.return_value = mock_normalizer
+            
+            result = await _handle_analyze_and_present(payload, handlers)
+    
+    # Verify we got AnalyzeResponse structure
     assert result is not None
-    assert "raw" in result
-    assert isinstance(result["raw"], str)
+    assert "action" in result
+    assert "expr" in result
+    assert "var" in result
+    assert "present" in result
+    assert "warnings" in result
+    assert "errors" in result
+    
+    # Verify present is a non-empty string
+    assert isinstance(result["present"], str)
+    assert len(result["present"]) > 0
+    
+    # Verify report is NOT in the response (internal only)
+    assert "report" not in result
+    
+    # Verify action matches
+    assert result["action"] == "domain"
 
 
 @pytest.mark.asyncio
@@ -45,9 +76,11 @@ async def test_analyze_and_present_rejects_invalid_math_action():
         "present": True,
     }
     
+    handlers = {}
+    
     # Should raise error about the invalid math action, not about "analyze_and_present"
     with pytest.raises(ValueError, match="unsupported action 'invalid_action'"):
-        await _handle_analyze_and_present(payload)
+        await _handle_analyze_and_present(payload, handlers)
 
 
 @pytest.mark.asyncio
@@ -60,22 +93,48 @@ async def test_analyze_and_present_requires_action_in_payload():
         "present": True,
     }
     
+    handlers = {}
+    
     with pytest.raises(ValueError, match="payload missing 'action' field"):
-        await _handle_analyze_and_present(payload)
+        await _handle_analyze_and_present(payload, handlers)
 
 
 @pytest.mark.asyncio
-async def test_analyze_and_present_converts_raw_to_expr():
-    """Test that analyze_and_present handler converts 'raw' to 'expr' for handlers."""
+async def test_analyze_and_present_handles_presenter_failure():
+    """Test that analyze_and_present handler handles presenter LLM failures gracefully."""
     payload = {
-        "raw": "x**2",  # Only "raw", no "expr"
+        "raw": "x**2",
         "var": "x",
         "action": "domain",
         "present": True,
     }
     
-    # Should work - handler converts "raw" to "expr"
-    result = await _handle_analyze_and_present(payload)
+    handlers = {
+        "domain": _handle_domain,
+    }
+    
+    # Mock presenter to fail
+    with patch("engine.workers.runtime.actions.analyze_pipeline.LLMPresenter") as mock_presenter_class:
+        mock_presenter = MagicMock()
+        mock_presenter.run.side_effect = Exception("LLM API error")
+        mock_presenter_class.return_value = mock_presenter
+        
+        # Mock InputNormalizer
+        with patch("engine.workers.runtime.actions.analyze_pipeline.InputNormalizer") as mock_normalizer_class:
+            mock_normalizer = MagicMock()
+            from app.llm.schemas.normalization import NormalizationResult
+            mock_normalizer.run.return_value = NormalizationResult(expr="x**2", var="x")
+            mock_normalizer_class.return_value = mock_normalizer
+            
+            result = await _handle_analyze_and_present(payload, handlers)
+    
+    # Should still return valid response with fallback present
     assert result is not None
-    assert "raw" in result
+    assert "present" in result
+    assert isinstance(result["present"], str)
+    assert len(result["present"]) > 0  # Must be non-empty
+    assert "report" not in result  # Report not exposed
+    
+    # Should have warning about presenter failure
+    assert len(result.get("warnings", [])) > 0
 

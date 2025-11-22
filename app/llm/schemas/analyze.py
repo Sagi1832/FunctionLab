@@ -12,8 +12,6 @@ class Action(str, Enum):
     asymptotes_and_holes = "asymptotes_and_holes"
     extrema_and_monotonic = "extrema_and_monotonic"
 
-
-
 class AnalyzeRequest(BaseModel):
     """The request to analyze."""
     raw: str
@@ -35,11 +33,14 @@ class AnalyzeResult(BaseModel):
     errors: List[str] = []
 
 class AnalyzeResponse(BaseModel):
-    """The response from /llm/analyze endpoint."""
+    """The response from /llm/analyze endpoint.
+    
+    This is the external schema sent via Kafka to the API.
+    It contains only the final human-friendly explanation, not the raw CalculusReport.
+    """
     action: Action
     expr: str
     var: str
-    report: Dict[str, Any]
+    present: str  # Required: final human-friendly explanation from presenter LLM
     warnings: List[str] = []
     errors: List[str] = []
-    present: Optional[Dict[str, Any]] = None

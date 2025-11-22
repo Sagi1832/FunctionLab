@@ -14,23 +14,25 @@ services:
 
   functionlab-kafka:
     image: confluentinc/cp-kafka:7.7.0
+    hostname: functionlab-kafka
     container_name: functionlab-kafka
     depends_on:
       - functionlab-zookeeper
+    ports:
+      - "9092:9092"
+      - "9093:9093"
     environment:
       KAFKA_BROKER_ID: 1
-      # שים לב לשם ה-service כאן:
-      KAFKA_ZOOKEEPER_CONNECT: "functionlab-zookeeper:2181"
+      KAFKA_ZOOKEEPER_CONNECT: functionlab-zookeeper:2181
 
-      KAFKA_LISTENERS: "PLAINTEXT://0.0.0.0:9092"
-      # וגם פה: השם הוא functionlab-kafka כדי שיתאים ל-ENGINE_KAFKA_BOOTSTRAP
-      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://functionlab-kafka:9092"
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_LISTENERS: INTERNAL://0.0.0.0:9092,EXTERNAL://0.0.0.0:9093
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://functionlab-kafka:9092,EXTERNAL://localhost:9093
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
 
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
-    ports:
-      - "9092:9092"
     networks:
       - functionlab_net
 
@@ -39,7 +41,6 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: functionlab-engine-worker
-    # worker שרץ ברקע ומדבר עם Kafka
     command: ["python", "-m", "engine.workers.main"]
     env_file:
       - .env
