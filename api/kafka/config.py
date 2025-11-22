@@ -1,16 +1,31 @@
 from __future__ import annotations
 
-import os
+from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from api.kafka.topics import REQUEST_TOPIC, RESPONSE_TOPIC
+
 
 class KafkaSettings(BaseSettings):
     """Kafka configuration for the API side."""
-    broker_url: str = os.getenv("ENGINE_KAFKA_BOOTSTRAP", "functionlab-kafka:9092")
-    client_id: str = "functionlab-api"
+
+    # Broker URL – read from ENGINE_KAFKA_BOOTSTRAP with a sane default
+    broker_url: str = Field(
+        default="localhost:9093",  # default for host dev; .env overrides
+        env="ENGINE_KAFKA_BOOTSTRAP",
+    )
+
+    client_id: str = "fl.api"
     group_id: str = "fl.api"
-    request_topic: str = os.getenv("ENGINE_REQUEST_TOPIC", REQUEST_TOPIC)
-    response_topic: str = os.getenv("ENGINE_RESPONSE_TOPIC", RESPONSE_TOPIC)
+
+    request_topic: str = Field(
+        default="fl.request.domain",
+        env="ENGINE_REQUEST_TOPIC",
+    )
+
+    response_topic: str = Field(
+        default="fl.response",
+        env="ENGINE_RESPONSE_TOPIC",
+    )
+
     security_protocol: str = "PLAINTEXT"
     sasl_mechanism: str = ""
     sasl_username: str = ""
@@ -19,7 +34,9 @@ class KafkaSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        env_prefix="KAFKA_",
         extra="ignore",
     )
+
+
+__all__ = ["KafkaSettings"]
 

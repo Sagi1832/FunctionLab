@@ -3,10 +3,12 @@ from __future__ import annotations
 import importlib
 import os
 from functools import lru_cache
-from typing import Any, Callable, Dict, Optional
-from api.kafka.engine_calls.analyze_and_present import analyze_and_present
+from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel
+
+# Import LLM schemas from the API repo instead of proxying from engine
+from api.llm.schemas import AnalyzeRequest, AnalyzeResponse
 
 ENGINE_NAMESPACE = os.getenv("ENGINE_NAMESPACE", "app")
 
@@ -83,12 +85,25 @@ class _NormalizationResultFallback(BaseModel):
 
 
 class _AnalyzeRequestFallback(BaseModel):
-    prompt: str
-    options: Dict[str, Any] | None = None
+    """Fallback AnalyzeRequest matching the structured schema."""
+    raw: str
+    var: str = "x"
+    action: str
+    interval: Optional[Tuple[float, float]] = None
+    closed: Optional[Tuple[bool, bool]] = None
+    present: bool = True
+    narrate: bool = False
+    narrate_lang: str = "en"
 
 
 class _AnalyzeResponseFallback(BaseModel):
-    summary: Dict[str, Any] | None = None
+    """Fallback AnalyzeResponse matching engine's new schema."""
+    action: str
+    expr: str
+    var: str
+    present: str  # required, not optional
+    warnings: List[str] = []
+    errors: List[str] = []
 
 
 class MissingParamsErrorFallback(Exception):
@@ -110,16 +125,7 @@ NormalizationResult = _attr_proxy(
     name="NormalizationResult",
     fallback=_NormalizationResultFallback,
 )
-AnalyzeRequest = _attr_proxy(
-    "llm.schemas.analyze.AnalyzeRequest",
-    name="AnalyzeRequest",
-    fallback=_AnalyzeRequestFallback,
-)
-AnalyzeResponse = _attr_proxy(
-    "llm.schemas.analyze.AnalyzeResponse",
-    name="AnalyzeResponse",
-    fallback=_AnalyzeResponseFallback,
-)
+# AnalyzeRequest and AnalyzeResponse are imported at the top from api.llm.schemas
 # Import the Kafka-based analyze_and_present helper
 MissingParamsError = _attr_proxy(
     "llm.pipelines.analyze_and_present.MissingParamsError",

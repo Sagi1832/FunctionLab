@@ -25,8 +25,9 @@ class EngineOverloadedError(RuntimeError):
 
 class EngineKafkaClient:
     """Async Kafka client for calling the engine service from the API."""
+
     def __init__(self, settings: KafkaSettings | None = None) -> None:
-        self._settings = settings or KafkaSettings()
+        self._settings: KafkaSettings = settings or KafkaSettings()
         self._producer: EngineRequestProducer | None = None
         self._consumer: EngineResponseConsumer | None = None
         self._pending: dict[str, asyncio.Future[EngineResponse]] = {}
@@ -34,6 +35,9 @@ class EngineKafkaClient:
 
     async def start(self) -> None:
         """Start producer + consumer components."""
+        # Log the effective bootstrap servers
+        logger.info("Kafka bootstrap servers: %s", self._settings.broker_url)
+
         self._producer = EngineRequestProducer(self._settings)
         self._consumer = EngineResponseConsumer(self._settings, self._pending)
 

@@ -30,6 +30,7 @@ def _mask_password(url: str) -> str:
     return url
 
 
+# Use DATABASE_URL from settings (single source of truth)
 _raw_url = settings.DATABASE_URL
 _temp_parsed = make_url(_raw_url.replace("postgresql+asyncpg://", "postgresql://"))
 
@@ -42,15 +43,8 @@ _db_name = _temp_parsed.database.lstrip("/") if _temp_parsed.database else ""
 ASYNC_DATABASE_URL: str = f"postgresql+asyncpg://{_db_user}:{_db_password}@{_db_host}:{_db_port}/{_db_name}"
 
 parsed_url = make_url(ASYNC_DATABASE_URL)
-logger.info("Database connection configuration:")
-logger.info("  Source: settings.DATABASE_URL")
-logger.info(f"  Full URL (masked): {_mask_password(ASYNC_DATABASE_URL)}")
-logger.info(f"  Driver: {parsed_url.get_backend_name()}")
-logger.info(f"  Host: {parsed_url.host}")
-logger.info(f"  Port: {parsed_url.port}")
-logger.info(f"  Database: {parsed_url.database}")
-logger.info(f"  Username: {parsed_url.username}")
-logger.info(f"  Password: {'***' if parsed_url.password else 'None'}")
+# Log DB host (without password) for startup visibility
+logger.info("Using DB URL: %s", _mask_password(ASYNC_DATABASE_URL))
 
 engine: AsyncEngine = create_async_engine(
     ASYNC_DATABASE_URL,
