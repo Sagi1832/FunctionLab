@@ -1,8 +1,8 @@
 from __future__ import annotations
 from typing import List, Optional
 import sympy as sp
-from ..domain import compute_domain
-from ..interval_guard import require_interval_minimal
+from ..foundation.domain import compute_domain
+from ..foundation.interval_guard import require_interval_minimal
 
 def ensure_work_set(expr: sp.Expr, var: sp.Symbol, interval: Optional[sp.Interval]):
     dom = compute_domain(expr, var)

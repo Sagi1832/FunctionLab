@@ -1,7 +1,7 @@
 from typing import List, Optional, Tuple
 import sympy as sp
 
-from ..derivative import DerivativeEngine
+from ..foundation.derivative import DerivativeEngine
 from .critical_points import solve_raw_roots, keep_real
 
 def dedupe_and_sort(roots: List[sp.Expr], tol: float = 1e-10) -> List[sp.Expr]:

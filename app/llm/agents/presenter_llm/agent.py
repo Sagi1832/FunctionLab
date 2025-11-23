@@ -1,5 +1,5 @@
 import logging
-from typing import Optional
+from typing import Optional, Tuple
 
 from app.llm.agents.base import Agent
 from app.llm.schemas.analyze import AnalyzeResult
@@ -17,13 +17,19 @@ class LLMPresenter(Agent[AnalyzeResult, str]):
         self.client = client or OpenAIClient()
         self.model = self.client.settings.model
 
-    def run(self, payload: AnalyzeResult) -> str:
-        """Convert AnalyzeResult to presenter text via the LLM."""
+    def run(self, payload: AnalyzeResult, user_interval: Optional[Tuple[float, float]] = None) -> str:
+        """Convert AnalyzeResult to presenter text via the LLM.
+        
+        Args:
+            payload: The analysis result to present
+            user_interval: Optional user-requested interval [a, b] for clipping monotonicity intervals
+        """
         user = build_user_prompt(
             action=payload.action.value,
             expr=payload.expr,
             var=payload.var,
             report=payload.report,
+            user_interval=user_interval,
         )
 
         try:

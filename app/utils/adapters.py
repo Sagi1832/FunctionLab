@@ -25,7 +25,7 @@ def sympy_locals(var: Union[str, Dict[str, sp.Symbol]],
     raise TypeError("sympy_locals expects a variable name (str) or a dict")
 
 class LnStrPrinter(StrPrinter):
-    """Print log(...) as ln(...); log(arg, base) when יש בסיס כללי."""
+    """Print log(...) as ln(...); log(arg, base) when general base is provided."""
     def _print_log(self, expr):  
         base = getattr(expr, "base", None)
         arg  = expr.args[0]

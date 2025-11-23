@@ -2,7 +2,7 @@ from __future__ import annotations
 from typing import Dict, List, Optional, Tuple
 import sympy as sp
 
-from ..derivative import DerivativeEngine
+from ..foundation.derivative import DerivativeEngine
 from ..critical_points.true_critical_candidates import find_critical_candidates
 
 from .numeric import as_float, dedupe_sorted, eval_derivative_sign

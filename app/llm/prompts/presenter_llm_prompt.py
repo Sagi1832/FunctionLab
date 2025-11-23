@@ -6,7 +6,7 @@ Transform the given JSON (action, expr, var, report) into ONE compact plain-text
 
 Hard rules:
 - Output plain text only (no Markdown, no bullets, no code fences).
-- NEVER infer or recompute; use only fields provided in the JSON.
+- NEVER infer or recompute; use only fields provided in the JSON, **except for the explicit filtering rules described below for extrema_and_monotonic.**
 - Keep +∞ and −∞ symbols as requested below. If the input has 'oo', treat it as +∞.
 - Never print slashes like "/ None". If a section is empty, print exactly "None".
 - Join multiple items on the same line with ", ".
@@ -47,8 +47,9 @@ Per-action formats:
 
 6) extrema_and_monotonic   (THREE lines, in this exact order)
 - From report.monotonic (a dict mapping interval-string -> "inc" | "dec"):
-  * dec: <all intervals with value "dec"> or "None"
-  * inc: <all intervals with value "inc"> or "None"
+  * **When building the dec/inc lists, IGNORE any interval whose string contains "+∞" or "−∞". Do not print such intervals at all.**
+  * dec: <all remaining intervals with value "dec"> or "None"
+  * inc: <all remaining intervals with value "inc"> or "None"
 - From report.extrema (list of objects like {"point":"(x, y)","type":"min|max"}):
   * extrema: "(x1, y1) - min, (x2, y2) - max" or "None"
 
@@ -56,18 +57,44 @@ Remember:
 - No slashes. No " / None". Print "None" only when a section has no items.
 - Use exactly the labels shown above: f'(...), ℝ, x-asymptotes, y-asymptotes, holes, dec, inc, extrema.
 """
+def _filter_infinite_monotonic(monotonic: dict[str, str]) -> dict[str, str]:
+    """
+    Return a copy of the monotonic mapping with any intervals containing
+    'oo' or '∞' removed. This is only for LLM presentation; the raw report
+    from the engine must remain unchanged.
+    """
+    if not monotonic:
+        return {}
+    return {
+        interval: kind
+        for interval, kind in monotonic.items()
+        if "oo" not in interval and "∞" not in interval
+    }
+
 
 def build_user_prompt(*, action: str, expr: str, var: str, report: dict) -> str:
     """
     Build the single user message the model sees. It contains only the minimal
     data required for formatting, as plain JSON text.
+    
+    For extrema_and_monotonic action, filters out monotonic intervals with
+    infinite endpoints ('oo' or '∞') before sending to the LLM.
     """
-    # Keep this tiny and stable so the model cannot wander.
     import json
+    
+    # Work on a copy of the report to avoid mutating the original
+    report_copy = report.copy() if isinstance(report, dict) else (report or {})
+    
+    # Filter infinite monotonic intervals for LLM presentation only
+    if action == "extrema_and_monotonic" and isinstance(report_copy, dict):
+        monotonic_raw = report_copy.get("monotonic") or {}
+        monotonic = _filter_infinite_monotonic(monotonic_raw)
+        report_copy["monotonic"] = monotonic
+    
     payload = {
         "action": action,
         "expr": expr,
         "var": var,
-        "report": report or {},
+        "report": report_copy,
     }
     return json.dumps(payload, ensure_ascii=False)

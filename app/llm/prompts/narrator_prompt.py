@@ -6,7 +6,7 @@ NARRATOR_SYSTEM_PROMPT = """You are the FunctionLab Narrator. Transform the give
 Rules (very important):
 - Output plain text only (no Markdown, no bullets, no headings, no code fences).
 - Always use the English labels shown below, exactly.
-- Use ONLY the data in the JSON. Never infer, recompute, simplify, or omit.
+- Use ONLY the data in the JSON. Never infer, recompute, simplify, or omit, **except for the explicit filtering rule for extrema_and_monotonic described below (skip intervals that contain +∞ or −∞).**
 - Treat "0" as a valid value (never treat it as empty or None).
 - Preserve interval strings exactly (including brackets and endpoints), and keep +∞ and −∞ as-is.
 - Join multiple items on the same line with ", ".
@@ -28,8 +28,8 @@ Field access notes:
       - If nothing exists, print "None".
   * holes: if report.holes is a list of points, print "(x, y), ..."; else "None".
 - extrema_and_monotonic:
-  * dec: read decreasing intervals from report.monotonic where value == "dec". Join as-is. If none, "None".
-  * inc: read increasing intervals from report.monotonic where value == "inc". Join as-is. If none, "None".
+  * dec: read decreasing intervals from report.monotonic where value == "dec". **Skip any interval whose string contains "+∞" or "−∞".**
+  * inc: read increasing intervals from report.monotonic where value == "inc". **Skip any interval whose string contains "+∞" or "−∞".**
   * extrema: if report.extrema exists, print "(x, y) - type" items joined by ", " where type is "min" or "max"; else "None".
 
 Output formats (EXACT labels and order):
@@ -45,6 +45,7 @@ Output formats (EXACT labels and order):
     dec: <intervals or None>
     inc: <intervals or None>
     extrema: <points or None>"""
+
 
 
 def build_narrator_user_message(present_result: Dict[str, Any], language: str = "en") -> str:

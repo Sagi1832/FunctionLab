@@ -76,7 +76,9 @@ async def run_engine_analyze_pipeline(
             errors=errors,
         )
         presenter = LLMPresenter()
-        present_text = presenter.run(result_for_presenter)
+        # Pass user interval for clipping monotonicity intervals in presenter
+        user_interval = request.interval if request.action == Action.extrema_and_monotonic else None
+        present_text = presenter.run(result_for_presenter, user_interval=user_interval)
         
         if not present_text or not present_text.strip():
             warnings.append("LLM presenter returned empty result")
