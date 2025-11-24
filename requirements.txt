@@ -31,3 +31,4 @@ orjson>=3.10,<4.0
 
 aiokafka>=0.10
 uvloop>=0.20 ; platform_system != "Windows"
+

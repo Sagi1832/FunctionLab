@@ -8,6 +8,7 @@ from app.core.interception.x_interception import x_intercepts
 
 
 async def _handle_x_intercepts(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle the x intercepts request."""
     expr_str = payload.get("expr")
     if not expr_str:
         raise ValueError("payload missing 'expr'")

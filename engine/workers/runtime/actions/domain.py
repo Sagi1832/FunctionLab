@@ -8,6 +8,7 @@ from app.core.foundation.domain import compute_domain
 
 
 async def _handle_domain(payload: Dict[str, Any]) -> Dict[str, Any]:
+    """Handle the domain request."""
     expr_str = payload.get("expr")
     if not expr_str:
         raise ValueError("payload missing 'expr'")

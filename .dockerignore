@@ -1,15 +1,25 @@
-.venv
+# Python __pycache__ etc
 __pycache__/
-**/__pycache__/
 *.py[cod]
-*.egg-info/
-.dist-info/
-.build/
+*.pyo
+*.pyd
+
+# Virtual env
+.venv/
+
+# Local env vars
+.env
+
+# Test / tooling caches
 .pytest_cache/
 .mypy_cache/
-outputs/
-.env
-.git
-.gitignore
-.DS_Store
+.coverage
+.htmlcov/
+
+# IDE / editor
 .vscode/
+.idea/
+
+# OS junk
+.DS_Store
+Thumbs.db
