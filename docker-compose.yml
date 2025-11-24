@@ -1,0 +1,33 @@
+services:
+  api:
+    build: .
+    container_name: functionlab-api
+    env_file: .env
+    ports:
+      - "${PORT:-8000}:8000"
+    depends_on:
+      - db
+    networks:
+      - functionlab_net
+
+  db:
+    image: postgres:16-alpine
+    container_name: functionlab-api-postgres
+    environment:
+      POSTGRES_USER: functionlab
+      POSTGRES_PASSWORD: functionlab_pw
+      POSTGRES_DB: functionlab
+    ports:
+      - "5433:5432"
+    volumes:
+      - pgdata_api:/var/lib/postgresql/data
+    networks:
+      - functionlab_net
+
+networks:
+  functionlab_net:
+    external: true
+    name: functionlab_functionlab_net
+
+volumes:
+  pgdata_api:

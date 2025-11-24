@@ -1,0 +1,36 @@
+# Web
+fastapi>=0.115
+uvicorn[standard]>=0.30
+slowapi>=0.1.9
+starlette>=0.40
+
+# Config / utils
+pydantic>=2.8
+pydantic-settings>=2.3
+python-dotenv>=1.0
+loguru>=0.7
+tenacity>=8.5
+
+# Kafka (async)
+aiokafka>=0.10.0
+
+# HTTP (optional for internal calls/tests)
+httpx>=0.27
+
+# LLM / OpenAI
+openai>=1.51.0
+
+
+# Auth stack (only if your API uses it — keep since you copied auth_router)
+python-jose[cryptography]>=3.3
+passlib[bcrypt]==1.7.4
+bcrypt==3.2.2
+
+# DB (only if you keep Postgres for auth/session)
+SQLAlchemy>=2.0
+asyncpg>=0.29
+alembic>=1.13
+
+# Testing
+pytest>=8.0
+pytest-asyncio>=0.23
