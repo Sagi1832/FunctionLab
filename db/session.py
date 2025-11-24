@@ -2,24 +2,10 @@ from __future__ import annotations
 import logging
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import AsyncEngine, AsyncSession, async_sessionmaker, create_async_engine
-from sqlalchemy.engine.url import make_url, URL
+from sqlalchemy.engine.url import make_url
 from config.settings import settings
 
 logger = logging.getLogger(__name__)
-
-def _as_asyncpg_url(database_url: str) -> str:
-    """Convert a synchronous database URL to an asynchronous one."""
-    url = make_url(database_url)
-    if url.get_backend_name().startswith("postgresql+"):
-        if "+asyncpg" not in url.get_backend_name():
-            async_url: URL = url.set(drivername="postgresql+asyncpg")
-            return str(async_url)
-        return database_url
-    if url.get_backend_name() == "postgresql":
-        async_url: URL = url.set(drivername="postgresql+asyncpg")
-        return str(async_url)
-    return database_url
-
 
 def _mask_password(url: str) -> str:
     """Mask password in database URL for logging."""

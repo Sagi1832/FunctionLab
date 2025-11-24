@@ -45,4 +45,5 @@ class EngineRequestProducer:
             request.correlation_id,
         )
 
-# Deprecated: use EngineKafkaClient instead
+# Internal building block used by EngineKafkaClient.
+# This class is not part of the public API - use EngineKafkaClient for Kafka operations.

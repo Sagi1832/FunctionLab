@@ -90,4 +90,5 @@ class EngineResponseConsumer:
         except Exception:
             logger.exception("Unexpected error in EngineResponseConsumer loop")
 
-# Deprecated: use EngineKafkaClient instead
+# Internal building block used by EngineKafkaClient.
+# This class is not part of the public API - use EngineKafkaClient for Kafka operations.
