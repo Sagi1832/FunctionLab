@@ -7,10 +7,20 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies / build
 node_modules
 dist
 dist-ssr
-*.local
+.local
+
+# Env files
+.env
+.env.*
+!.env.example
+
+# Cypress artifacts
+cypress/videos/
+cypress/screenshots/
 
 # Editor directories and files
 .vscode/*
